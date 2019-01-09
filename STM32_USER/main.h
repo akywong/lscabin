@@ -9,6 +9,7 @@
 #define ADC_3_UNVALID 0x20
 
 #define LOW_TEMP_LIMIT 5
+#define HIGH_TEMP_LIMIT 10
 #define LOW_LIGHT_LIMIT 1000
 
 struct fs_status{
@@ -33,7 +34,9 @@ struct sys_status{
     uint8_t lora_send_flag;
 		uint8_t stop_feed_flag;
 		uint8_t rtc_flag;
-		uint8_t heater;//1,加热器开启。0，加热器关闭
+		uint8_t heater_flag;//1,加热器开启。0，加热器关闭
+		uint8_t rain_flag;//0-无雨，1-有雨
+		uint8_t door_flag;//0-关闭，1-开135度，2-开225度
 };
 
 struct wind_info{

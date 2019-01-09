@@ -57,21 +57,6 @@ struct record_info{
 struct record_info record;
 struct record_info record_old;
 
-#define CONFIG_GPIO     GPIOA
-#define CONFIG_PIN			GPIO_Pin_1
-#define CONFIG_IO_RCC_CLK RCC_APB2Periph_GPIOA
-#define CONFIG_IO_GET_IN()  ((CONFIG_GPIO->IDR & CONFIG_PIN)?(1):(0))
-void config_gpio_init(void)
-{
-	GPIO_InitTypeDef  GPIO_InitStructure;
-	
-	RCC_APB2PeriphClockCmd(CONFIG_IO_RCC_CLK, ENABLE);
-	
-	GPIO_InitStructure.GPIO_Pin = CONFIG_PIN;	 	     //端口配置, 推挽输出
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD; 		     //上拉输入
-	GPIO_Init(CONFIG_GPIO, &GPIO_InitStructure);
-}
-
 int main(void)
 {
 	memset(&cur, 0, sizeof(struct fs_status));
@@ -86,13 +71,81 @@ int main(void)
 	IO_Init();
 	rain_int_start();
 	Beep_Init();
-	//Key_Init();
-	config_gpio_init();
 	AT24CXX_Init();
 	
 	USART1_Init(115200); //串口1初始化
 	USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
-
+	LED_ON(LED1);
+	while(AT24CXX_Check())
+	{
+		delay_ms(500);
+		//delay_ms(500);
+		LED_TOGGLE(LED1);
+		printf("EEPROM Check Failed!\r\n");
+	}
+	if(CONFIG_GPIO_GET_IN()) {
+		while(1) {
+			if(usart1_recv_frame_flag) {
+				sscanf((char*)usart1_recv, "$%d,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d:%d:%d,%d,%d",&config.baud,
+					&config.cal[0].A,&config.cal[0].B,&config.cal[1].A,&config.cal[1].B,&config.cal[2].A,&config.cal[2].B,&config.cal[3].A,&config.cal[3].B,
+					&config.year,&config.month,&config.date,&config.hour,&config.minute,&config.second,&config.ad_gain,&config.freq);
+				usart1_recv_frame_flag = 0;
+				if(config.year == 0) {
+					status.rtc_flag =0;
+				} else {
+					status.rtc_flag = 1;
+				}
+				USART_SendString(USART1,usart1_recv);
+				config.head = 0xAA5555AA;
+				config.tail = 0xAA5555AA;
+				AT24CXX_Write(0,(u8*)&config,sizeof(config));
+				//AT24CXX_Read(0,(u8*)&test_config,sizeof(config));
+				break;
+			}
+			delay_ms(50);
+		}
+	} else {	
+		AT24CXX_Read(0,(u8*)&config,sizeof(config));
+		if((config.head != 0xAA5555AA) || (config.tail != 0xAA5555AA)){
+			config.head = 0xAA5555AA;
+			config.tail = 0xAA5555AA;
+			config.baud = 9600;
+			config.cal[0].A = 1.0;
+			config.cal[0].B = 0;
+			config.cal[1].A = 1.0;
+			config.cal[1].B = 0;
+			config.cal[2].A = 1.0;
+			config.cal[2].B = 0;
+			config.cal[3].A = 1.0;
+			config.cal[3].B = 0;
+			config.year = 2018;
+			config.month = 11;
+			config.date = 8;
+			config.hour = 0;
+			config.minute = 0;
+			config.second = 0;
+			config.freq = 1;
+			config.ad_gain = ADS1256_GAIN_1;
+			AT24CXX_Write(0,(u8*)&config,sizeof(config));
+		}
+		status.rtc_flag = 0;
+	}
+	printf("usart2 baud : %d\r\n",config.baud);
+	printf("ch 0 A : %f\r\n",config.cal[0].A);
+	printf("ch 0 B : %f\r\n",config.cal[0].B);
+	printf("ch 1 A : %f\r\n",config.cal[1].A);
+	printf("ch 1 B : %f\r\n",config.cal[1].B);
+	printf("ch 2 A : %f\r\n",config.cal[2].A);
+	printf("ch 2 B : %f\r\n",config.cal[2].B);
+	printf("ch 3 A : %f\r\n",config.cal[3].A);
+	printf("ch 3 B : %f\r\n",config.cal[3].B);
+	printf("ad_gain : %d\r\n",config.ad_gain);
+	printf("freq : %d\r\n",config.freq);
+	LED_ON(LED1);
+	
+	while(RTC_Init(status.rtc_flag,config.year,config.month,config.date,config.hour,config.minute,config.second)) {
+		delay_ms(100);
+	}
 	bme280_init(&dev);
 	
 	bsp_InitADS1256();
@@ -107,12 +160,12 @@ int main(void)
 			status.last_sensor = tick_count;
 			if(BME280_OK == bme280_get_sensor_data(BME280_ALL, &comp_data, &dev)){
 				if ( LOW_TEMP_LIMIT > comp_data.temperature ) {
-					if (status.heater == 0)
+					if (status.heater_flag == 0)
 						HEATER_ON;
-				} else {
-					if(status.heater == 1)
+				} else if(HIGH_TEMP_LIMIT < comp_data.temperature){
+					if(status.heater_flag == 1)
 						HEATER_OFF;
-				}
+				} 
 			}
 		}
 		//记录AD转换信息
@@ -127,7 +180,7 @@ int main(void)
 				USART_SendString(USART1," ADS1256 RESET\r\n");
 			}
 			if(record.ADC_value0 < LOW_LIGHT_LIMIT) {
-				FAN_OFF;
+				POWER_OFF;
 			}
 		}
 		
