@@ -19,6 +19,13 @@
 #define HEATER_ON   IO_ON(HEATER)
 #define HEATER_OFF  IO_OFF(HEATER)
 
+//220V电源监测IO
+#define POWER_CHECK_GPIO_RCC_CLK  RCC_APB2Periph_GPIOC
+#define POWER_CHECK_GPIO  GPIOC
+#define POWER_CHECK_PIN   GPIO_Pin_0
+#define POWER_CHECK_GET_IN()  ((POWER_CHECK_GPIO->IDR & POWER_CHECK_PIN)?(1):(0))  
+
+
 //雨感器中断IO--PC1
 #define RAIN_SENSOR_GPIO_RCC_CLK 	RCC_APB2Periph_GPIOC
 #define RAIN_SENSOR_GPIO	GPIOC
@@ -41,10 +48,14 @@
 #define CONFIG_GPIO_GET_IN()  ((CONFIG_GPIO->IDR & CONFIG_PIN)?(1):(0))
 
 //限位开光中断IO--PC4,PC5,PC6
+#define LIMIT_GPIO_RCC_CLK 	RCC_APB2Periph_GPIOC
 #define LIMIT_GPIO  GPIOC
 #define LIMIT_PIN1  GPIO_Pin_4
 #define LIMIT_PIN2  GPIO_Pin_5
 #define LIMIT_PIN3  GPIO_Pin_6
+#define LIMIT1_GPIO_GET_IN()  ((LIMIT_GPIO->IDR & LIMIT_PIN1)?(1):(0))
+#define LIMIT2_GPIO_GET_IN()  ((LIMIT_GPIO->IDR & LIMIT_PIN2)?(1):(0))
+#define LIMIT3_GPIO_GET_IN()  ((LIMIT_GPIO->IDR & LIMIT_PIN3)?(1):(0))
 
 #define LIMIT_GPIO_RCC_CLK RCC_APB2Periph_GPIOC
 /************************* 函数声明 *********************************/
@@ -52,6 +63,15 @@ void IO_Init(void);//初始化
 
 void rain_int_start(void);
 void rain_int_stop(void);
+	
+void limit1_int_start(void);
+void limit1_int_stop(void);
+	
+void limit2_int_start(void);
+void limit2_int_stop(void);
+	
+void limit3_int_start(void);
+void limit3_int_stop(void);
 
 /****************************** end *********************************/
 

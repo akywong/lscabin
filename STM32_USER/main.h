@@ -12,39 +12,25 @@
 #define HIGH_TEMP_LIMIT 10
 #define LOW_LIGHT_LIMIT 1000
 
-struct fs_status{
-	FATFS fs;
-	FIL   fsrc;
-	char  fpath[32];
-	FILINFO finfo;
-	uint8_t file_flag;
-	uint32_t sd_cap;
-	uint32_t file_id;
-	uint32_t line_num;
-};
-
 struct sys_status{
 		uint32_t sys_config_flag;
 		uint32_t last_record_tick;
     uint32_t last_cmd_tick;
-		uint32_t last_wind_info;
 		uint32_t last_adc;
 		uint32_t last_sensor;//温湿度计
-    uint8_t cmd_send_flag;
+    uint32_t last_rain;
+		uint8_t cmd_send_flag;
     uint8_t lora_send_flag;
 		uint8_t stop_feed_flag;
 		uint8_t rtc_flag;
-		uint8_t heater_flag;//1,加热器开启。0，加热器关闭
-		uint8_t rain_flag;//0-无雨，1-有雨
-		uint8_t door_flag;//0-关闭，1-开135度，2-开225度
-};
-
-struct wind_info{
-	char  *info_str;
-	float speed;
-	float direction;
-	char status;
-	uint8_t flag;
+		uint8_t heater_status;//1,加热器开启。0，加热器关闭
+		uint8_t rain_status;//0-无雨，1-有雨
+		uint8_t light_status;//0-光照弱,1-光照强
+		uint8_t door_cur;//0-关闭，1-开135度，2-开225度
+		uint8_t door_exp;//期望状态
+		uint8_t door_move;//舱门运动状态，0-静止，1-运动
+		uint8_t power_em27;
+		uint8_t power_220v;
 };
 
 struct sys_config{
@@ -67,4 +53,5 @@ struct sys_config{
 };
 
 extern uint8_t new_file_flag;
+extern struct sys_status status;
 #endif

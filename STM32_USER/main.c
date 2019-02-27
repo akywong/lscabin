@@ -6,18 +6,15 @@
 #include "usart.h"
 #include "led.h"
 #include "io.h"
-//#include "w25qxx.h"
 #include "string.h"
-//#include "ff.h"
-#include "sdio_sdcard.h"
 #include "beep.h"
 #include "rtc.h"
 #include "timer.h"
 #include "key.h"
 #include "24cxx.h"
-//#include "adc.h"
 #include "bme280.h"
 #include "bsp_ads1256.h"
+#include "TimerPWM.h"
 #include "main.h"
 
 uint8_t new_file_flag = 0;
@@ -30,8 +27,6 @@ double ADC_value[ADC_CHAN_NUM];
 //
 struct sys_status status;
 struct sys_config config;
-struct wind_info  wind;
-struct fs_status cur;
 struct bme280_dev dev;
 struct bme280_data comp_data;
 
@@ -59,19 +54,20 @@ struct record_info record_old;
 
 int main(void)
 {
-	memset(&cur, 0, sizeof(struct fs_status));
 	memset(&status, 0, sizeof(struct sys_status));
 	memset(ADC_value,0,sizeof(double)*ADC_CHAN_NUM);
-	memset(&record, 0, sizeof(record));
-	memset(&record_old, 0, sizeof(record_old));
 	delay_init();	    //延时函数初始化
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
 	TIM_SetInterval(1,2000);//1ms
 	LED_Init();
 	IO_Init();
-	rain_int_start();
+	//rain_int_start();
 	Beep_Init();
 	AT24CXX_Init();
+	
+	TIM3_PWM_Init(1000-1,72-1);//72分频，计数到1000，周期为1ms，对应频率1KHz
+	//TIM_SetCompare2(TIM3,499);//设置占空比为500us，即50%占空比
+	TIM_SetCompare2(TIM3,0);
 	
 	USART1_Init(115200); //串口1初始化
 	USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
@@ -153,6 +149,10 @@ int main(void)
 	ADS1256_CfgADC((ADS1256_GAIN_E)config.ad_gain, ADS1256_5SPS);
 	ADS1256_StartScan(1);	
 	
+	limit1_int_start();
+	limit2_int_start();
+	limit3_int_start();
+	
 	while(1)
 	{
 		//定时读取温度判断加热器是否开启
@@ -160,13 +160,39 @@ int main(void)
 			status.last_sensor = tick_count;
 			if(BME280_OK == bme280_get_sensor_data(BME280_ALL, &comp_data, &dev)){
 				if ( LOW_TEMP_LIMIT > comp_data.temperature ) {
-					if (status.heater_flag == 0)
+					if (status.heater_status == 0){
 						HEATER_ON;
+						status.heater_status = 1;
+					}
 				} else if(HIGH_TEMP_LIMIT < comp_data.temperature){
-					if(status.heater_flag == 1)
+					if(status.heater_status == 1) {
 						HEATER_OFF;
+						status.heater_status = 0;
+					}
 				} 
 			}
+		}
+		
+		//
+		if(POWER_CHECK_GET_IN() == 0 ) {
+			status.power_220v = 0;
+			POWER_OFF;
+			status.power_em27 = 0;
+			status.door_exp = 0;	
+			USART_SendString(USART1,"STOP");
+		} else {
+			status.power_220v = 1;
+		}
+		
+		//		
+		if(RAIN_SENSOR_GPIO_GET_IN()){
+			status.rain_status = 1;
+			POWER_OFF;
+			status.door_exp = 0;
+			status.power_em27 = 0;
+			USART_SendString(USART1,"STOP");
+		} else {
+			status.rain_status = 0;
 		}
 		//记录AD转换信息
 		if((tick_count - status.last_adc) > 400) {
@@ -181,18 +207,37 @@ int main(void)
 			}
 			if(record.ADC_value0 < LOW_LIGHT_LIMIT) {
 				POWER_OFF;
+				status.door_exp = 0;
+				status.power_em27 = 0;
+				USART_SendString(USART1,"STOP");
+			}
+		}
+		if(status.power_em27 == 0){
+			if((status.power_220v)==1 && (status.rain_status==0) && (record.ADC_value0 >= LOW_LIGHT_LIMIT)) {
+				POWER_ON;
+				status.power_em27 = 1;
+				USART_SendString(USART1,"START");
+			}
+		}
+		if(status.door_exp != 0) {
+			if(calendar.hour>3 && calendar.hour<11) {
+				//舱门旋转135度
+				status.door_exp = 1;
+			} else if(calendar.hour>10 && calendar.hour<16) {
+				//舱门旋转215度
+				status.door_exp = 2;
 			}
 		}
 		
-		if(calendar.hour>3 && calendar.hour<11) {
-			//舱门旋转135度
-		} else if(calendar.hour>10 && calendar.hour<16) {
-			//舱门旋转215度
+		if(status.door_exp != status.door_exp) {
+			//move_door();
+			TIM_SetCompare2(TIM3,499);
 		}
+		delay_ms(100);
 	}
 }
 
-void get_ADC_value(void)
+/*void get_ADC_value(void)
 {
 	int32_t adc[ADC_CHAN_NUM];
 	int i;
@@ -202,4 +247,4 @@ void get_ADC_value(void)
 		adc[i] = ADS1256_GetAdc(i);
 		ADC_value[i] = ((double)adc[i] * 2500000.0) / 4194303.0;
 	}
-}
+}*/
