@@ -51,7 +51,7 @@ struct record_info{
 };
 struct record_info record;
 struct record_info record_old;
-
+int  loop_idx = 0;
 int main(void)
 {
 	memset(&status, 0, sizeof(struct sys_status));
@@ -67,12 +67,13 @@ int main(void)
 	
 	TIM3_PWM_Init(1000-1,72-1);//72分频，计数到1000，周期为1ms，对应频率1KHz
 	//TIM_SetCompare2(TIM3,499);//设置占空比为500us，即50%占空比
-	TIM_SetCompare2(TIM3,0);
+	//TIM_SetCompare2(TIM3,0);
+	TIM_SetCompare2(TIM3,499);
 	
 	USART1_Init(115200); //串口1初始化
 	USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
 	LED_ON(LED1);
-	while(AT24CXX_Check())
+	/*while(AT24CXX_Check())
 	{
 		delay_ms(500);
 		//delay_ms(500);
@@ -147,16 +148,16 @@ int main(void)
 	bsp_InitADS1256();
 	
 	ADS1256_CfgADC((ADS1256_GAIN_E)config.ad_gain, ADS1256_5SPS);
-	ADS1256_StartScan(1);	
+	ADS1256_StartScan(1);*/
 	
-	limit1_int_start();
-	limit2_int_start();
-	limit3_int_start();
+	//limit1_int_start();
+	//limit2_int_start();
+	//limit3_int_start();
 	
 	while(1)
 	{
 		//定时读取温度判断加热器是否开启
-		if((tick_count - status.last_sensor) >400) {
+		/*if((tick_count - status.last_sensor) >400) {
 			status.last_sensor = tick_count;
 			if(BME280_OK == bme280_get_sensor_data(BME280_ALL, &comp_data, &dev)){
 				if ( LOW_TEMP_LIMIT > comp_data.temperature ) {
@@ -218,8 +219,9 @@ int main(void)
 				status.power_em27 = 1;
 				USART_SendString(USART1,"START");
 			}
-		}
-		if(status.door_exp != 0) {
+		}*/
+		status.door_exp = (loop_idx++)%3; 
+		/*if(status.door_exp != 0) {
 			if(calendar.hour>3 && calendar.hour<11) {
 				//舱门旋转135度
 				status.door_exp = 1;
@@ -227,13 +229,13 @@ int main(void)
 				//舱门旋转215度
 				status.door_exp = 2;
 			}
-		}
+		}*/
 		
-		if(status.door_exp != status.door_exp) {
+		if(status.door_exp != status.door_cur) {
 			//move_door();
-			TIM_SetCompare2(TIM3,499);
+			TIM_SetCompare2(TIM3,999);
 		}
-		delay_ms(100);
+		delay_ms(10000);
 	}
 }
 

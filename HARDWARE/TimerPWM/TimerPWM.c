@@ -29,7 +29,7 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
 ////	GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化GPIO
 	
    //设置输出TIM3 CH2的PWM脉冲波形	GPIOA.7
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2; //TIM_CH2
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7; //TIM_CH2
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //复用推挽输出
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);//初始化GPIO
