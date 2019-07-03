@@ -7,23 +7,30 @@ void IO_Init(void)
  GPIO_InitTypeDef  GPIO_InitStructure;
  uint32_t peri;
 	
- peri = HEATER_GPIO_RCC_CLK|RAIN_SENSOR_GPIO_RCC_CLK|POWER_GPIO_RCC_CLK |CONFIG_GPIO_RCC_CLK ;
+ peri = HEATER_GPIO_RCC_CLK|RAIN_SENSOR_GPIO_RCC_CLK|POWER_GPIO_RCC_CLK |CONFIG_GPIO_RCC_CLK |LIMIT_GPIO_RCC_CLK;
 	
  RCC_APB2PeriphClockCmd(peri, ENABLE);	 //使能时钟
- //加热继电器IO初始化
+ //加热继电器IO初始化（输出）
  GPIO_InitStructure.GPIO_Pin = HEATER_PIN;				       //加热器端口配置
  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 		 //推挽输出
  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 //IO口速度为50MHz
  GPIO_Init(HEATER_GPIO, &GPIO_InitStructure);					   //根据设定参数初始化加热器
  GPIO_ResetBits(HEATER_GPIO,HEATER_PIN);						         //控制管脚输出低
 	
+	//EM27电源控制管脚（输出）
 	GPIO_InitStructure.GPIO_Pin = POWER_PIN;
 	GPIO_Init(POWER_GPIO, &GPIO_InitStructure);
 	
+	//12V电源控制管脚（输出）
+	GPIO_InitStructure.GPIO_Pin = POWER_12V_PIN;
+	GPIO_Init(POWER_12V_GPIO, &GPIO_InitStructure);
+	
+	//是否配置判断管脚（输入）
 	GPIO_InitStructure.GPIO_Pin = CONFIG_PIN;	 	     //端口配置, 推挽输出
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD; 		     //上拉输入
 	GPIO_Init(CONFIG_GPIO, &GPIO_InitStructure);
 	
+	//220V电压检测管脚（输入）
 	GPIO_InitStructure.GPIO_Pin = POWER_CHECK_PIN;	 	     //端口配置, 推挽输出
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD; 		     //上拉输入
 	GPIO_Init(POWER_CHECK_GPIO, &GPIO_InitStructure);
@@ -31,6 +38,19 @@ void IO_Init(void)
 	//雨感器中断IO初始化
 	GPIO_InitStructure.GPIO_Pin = RAIN_SENSOR_PIN;
 	GPIO_Init(RAIN_SENSOR_GPIO, &GPIO_InitStructure);
+	
+	//
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	
+	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN1;
+	GPIO_Init(LIMIT_GPIO, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN2;
+	GPIO_Init(LIMIT_GPIO, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN3;
+	GPIO_Init(LIMIT_GPIO, &GPIO_InitStructure);
 }
  
 void rain_int_start(void)
@@ -82,6 +102,7 @@ void rain_int_stop(void)
 void EXTI1_IRQHandler(void)
 {
 	POWER_OFF;
+	POWER_12V_OFF;
 }
 
 
@@ -99,7 +120,7 @@ void limit1_int_start(void)
 	/* Configure EXTI4 line */
 	EXTI_InitStructure.EXTI_Line = EXTI_Line4;
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;  /* 下降沿 */
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  /* 上升沿 */
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
 
@@ -117,9 +138,9 @@ void limit1_int_stop(void)
 	NVIC_InitTypeDef   NVIC_InitStructure;
 
 	/* 配置 EXTI LineXXX */
-	EXTI_InitStructure.EXTI_Line = EXTI_Line5;
+	EXTI_InitStructure.EXTI_Line = EXTI_Line4;
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;	/* 下降沿 */
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;	/* 上升沿 */
 	EXTI_InitStructure.EXTI_LineCmd = DISABLE;		/* 禁止 */
 	EXTI_Init(&EXTI_InitStructure);
 
@@ -137,7 +158,7 @@ void EXTI4_IRQHandler(void)
 	{
 		EXTI_ClearITPendingBit(EXTI_Line4);		/* 清除中断标志位 */
 
-		TIM_SetCompare2(TIM3,0);
+		TIM_SetCompare2(TIM3,999);
 		status.door_move = 0;
 		status.door_cur = 0;
 
@@ -160,7 +181,7 @@ void limit2_int_start(void)
 	/* Configure EXTI4 line */
 	EXTI_InitStructure.EXTI_Line = EXTI_Line5;
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;  /* 下降沿 */
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  /* 上升沿 */
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
 
@@ -180,7 +201,7 @@ void limit2_int_stop(void)
 	/* 配置 EXTI LineXXX */
 	EXTI_InitStructure.EXTI_Line = EXTI_Line5;
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;	/* 下降沿 */
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;	/* 上升沿 */
 	EXTI_InitStructure.EXTI_LineCmd = DISABLE;		/* 禁止 */
 	EXTI_Init(&EXTI_InitStructure);
 
@@ -205,7 +226,7 @@ void limit3_int_start(void)
 	/* Configure EXTI4 line */
 	EXTI_InitStructure.EXTI_Line = EXTI_Line6;
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;  /* 下降沿 */
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  /* 上升沿 */
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
 
@@ -225,7 +246,7 @@ void limit3_int_stop(void)
 	/* 配置 EXTI LineXXX */
 	EXTI_InitStructure.EXTI_Line = EXTI_Line6;
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;	/* 下降沿 */
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;	/* 上升沿 */
 	EXTI_InitStructure.EXTI_LineCmd = DISABLE;		/* 禁止 */
 	EXTI_Init(&EXTI_InitStructure);
 
@@ -243,9 +264,9 @@ void EXTI9_5_IRQHandler(void)
 	
 	if (EXTI_GetITStatus(EXTI_Line5) != RESET)
 	{
-		EXTI_ClearITPendingBit(EXTI_Line4);		/* 清除中断标志位 */
+		EXTI_ClearITPendingBit(EXTI_Line5);		/* 清除中断标志位 */
 
-		TIM_SetCompare2(TIM3,0);
+		TIM_SetCompare2(TIM3,999);
 		status.door_move = 0;
 		status.door_cur = 1;
 
@@ -255,9 +276,9 @@ void EXTI9_5_IRQHandler(void)
 	
 	if (EXTI_GetITStatus(EXTI_Line6) != RESET)
 	{
-		EXTI_ClearITPendingBit(EXTI_Line4);		/* 清除中断标志位 */
+		EXTI_ClearITPendingBit(EXTI_Line6);		/* 清除中断标志位 */
 
-		TIM_SetCompare2(TIM3,0);
+		TIM_SetCompare2(TIM3,999);
 		status.door_move = 0;
 		status.door_cur = 2;
 

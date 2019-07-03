@@ -16,19 +16,10 @@ void TIM3_PWM_Init(u16 arr,u16 psc)
 	
 	
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);	//使能定时器3时钟
- 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB  | RCC_APB2Periph_AFIO, ENABLE);  //使能GPIO外设和AFIO复用功能模块时钟
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);  //使能GPIO外设和AFIO复用功能模块时钟
+ 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC  | RCC_APB2Periph_AFIO, ENABLE);  //使能GPIO外设和AFIO复用功能模块时钟
 	
-	
-	//GPIO_PinRemapConfig(GPIO_PartialRemap_TIM3, ENABLE); //Timer3部分重映射  TIM3_CH2->PB5
-	
-////   //设置该引脚为复用输出功能,输出TIM3 CH2的PWM脉冲波形	GPIOB.5
-////	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5; //TIM_CH2
-////	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //复用推挽输出
-////	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-////	GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化GPIO
-	
-   //设置输出TIM3 CH2的PWM脉冲波形	GPIOA.7
+	GPIO_PinRemapConfig(GPIO_FullRemap_TIM3, ENABLE);   //设置输出TIM3 CH2的PWM脉冲波形	GPIOC.7
+
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7; //TIM_CH2
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;  //复用推挽输出
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;

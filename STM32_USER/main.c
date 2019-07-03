@@ -52,27 +52,36 @@ struct record_info{
 struct record_info record;
 struct record_info record_old;
 int  loop_idx = 0;
+
+u8 flag=0;//????
+u16 t=0;//?????
 int main(void)
 {
 	memset(&status, 0, sizeof(struct sys_status));
 	memset(ADC_value,0,sizeof(double)*ADC_CHAN_NUM);
+	status.door_cur = 20;
+	status.door_exp = 1;
 	delay_init();	    //延时函数初始化
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//设置中断优先级分组为组2：2位抢占优先级，2位响应优先级
 	TIM_SetInterval(1,2000);//1ms
 	LED_Init();
 	IO_Init();
+	
+	POWER_12V_OFF;
+	//TEST_ON;
 	//rain_int_start();
 	Beep_Init();
 	AT24CXX_Init();
 	
 	TIM3_PWM_Init(1000-1,72-1);//72分频，计数到1000，周期为1ms，对应频率1KHz
-	//TIM_SetCompare2(TIM3,499);//设置占空比为500us，即50%占空比
-	//TIM_SetCompare2(TIM3,0);
-	TIM_SetCompare2(TIM3,499);
+	TIM_SetCompare2(TIM3,999);
 	
 	USART1_Init(115200); //串口1初始化
 	USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
 	LED_ON(LED1);
+	while(0){
+		TIM_SetCompare2(TIM3,499);
+	}
 	/*while(AT24CXX_Check())
 	{
 		delay_ms(500);
@@ -142,18 +151,21 @@ int main(void)
 	
 	while(RTC_Init(status.rtc_flag,config.year,config.month,config.date,config.hour,config.minute,config.second)) {
 		delay_ms(100);
-	}
-	bme280_init(&dev);
+	}*/
+	/*bme280_init(&dev);
 	
 	bsp_InitADS1256();
 	
 	ADS1256_CfgADC((ADS1256_GAIN_E)config.ad_gain, ADS1256_5SPS);
 	ADS1256_StartScan(1);*/
 	
-	//limit1_int_start();
-	//limit2_int_start();
-	//limit3_int_start();
+	while(RTC_Init(1,2019,6,23,19,0,0)) {
+		delay_ms(100);
+	}
 	
+	limit1_int_start();
+	limit2_int_start();
+	limit3_int_start();
 	while(1)
 	{
 		//定时读取温度判断加热器是否开启
@@ -183,20 +195,21 @@ int main(void)
 			USART_SendString(USART1,"STOP");
 		} else {
 			status.power_220v = 1;
-		}
+		}*/
 		
 		//		
-		if(RAIN_SENSOR_GPIO_GET_IN()){
+		/*if(0==RAIN_SENSOR_GPIO_GET_IN()){//默认高电平，低电平关舱门
 			status.rain_status = 1;
 			POWER_OFF;
+			POWER_12V_OFF;
 			status.door_exp = 0;
 			status.power_em27 = 0;
 			USART_SendString(USART1,"STOP");
 		} else {
 			status.rain_status = 0;
-		}
+		}*/
 		//记录AD转换信息
-		if((tick_count - status.last_adc) > 400) {
+		/*if((tick_count - status.last_adc) > 400) {
 			status.last_adc = tick_count;
 			record.ADC_value0 += (double)ADS1256_GetAdc(0);
 			record.ADC_value1 += (double)ADS1256_GetAdc(1);
@@ -208,6 +221,7 @@ int main(void)
 			}
 			if(record.ADC_value0 < LOW_LIGHT_LIMIT) {
 				POWER_OFF;
+				POWER_12V_OFF;
 				status.door_exp = 0;
 				status.power_em27 = 0;
 				USART_SendString(USART1,"STOP");
@@ -216,13 +230,15 @@ int main(void)
 		if(status.power_em27 == 0){
 			if((status.power_220v)==1 && (status.rain_status==0) && (record.ADC_value0 >= LOW_LIGHT_LIMIT)) {
 				POWER_ON;
+				POWER_12V_ON;
 				status.power_em27 = 1;
 				USART_SendString(USART1,"START");
 			}
 		}*/
-		status.door_exp = (loop_idx++)%3; 
+		//status.door_exp = ((loop_idx++)/3000)%3; 
+		status.door_exp = calendar.min%3;
 		/*if(status.door_exp != 0) {
-			if(calendar.hour>3 && calendar.hour<11) {
+			if(calendar.hour>3 && calendar.hour<10) {
 				//舱门旋转135度
 				status.door_exp = 1;
 			} else if(calendar.hour>10 && calendar.hour<16) {
@@ -230,12 +246,12 @@ int main(void)
 				status.door_exp = 2;
 			}
 		}*/
-		
+		printf("exp,cur : %d,%d\r\n",status.door_exp,status.door_cur);
 		if(status.door_exp != status.door_cur) {
 			//move_door();
-			TIM_SetCompare2(TIM3,999);
+			TIM_SetCompare2(TIM3,499);
 		}
-		delay_ms(10000);
+		delay_ms(10);
 	}
 }
 

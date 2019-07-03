@@ -10,18 +10,18 @@
 #define IO_TOGGLE(x)  x^=1
 /****************************** end *********************************/
 
-//加热电源控制IO--PE0
-#define HEATER_GPIO_RCC_CLK RCC_APB2Periph_GPIOE
-#define HEATER_GPIO  GPIOE
-#define HEATER_PIN   GPIO_Pin_0
-#define HEATER PEout(0)
+//加热电源控制IO--PC2
+#define HEATER_GPIO_RCC_CLK RCC_APB2Periph_GPIOC
+#define HEATER_GPIO  GPIOC
+#define HEATER_PIN   GPIO_Pin_2
+#define HEATER PCout(2)
 
 #define HEATER_ON   IO_ON(HEATER)
 #define HEATER_OFF  IO_OFF(HEATER)
 
 //220V电源监测IO
-#define POWER_CHECK_GPIO_RCC_CLK  RCC_APB2Periph_GPIOC
-#define POWER_CHECK_GPIO  GPIOC
+#define POWER_CHECK_GPIO_RCC_CLK  RCC_APB2Periph_GPIOE
+#define POWER_CHECK_GPIO  GPIOE
 #define POWER_CHECK_PIN   GPIO_Pin_0
 #define POWER_CHECK_GET_IN()  ((POWER_CHECK_GPIO->IDR & POWER_CHECK_PIN)?(1):(0))  
 
@@ -40,6 +40,24 @@
 
 #define POWER_ON   IO_ON(POWER)
 #define POWER_OFF  IO_OFF(POWER)
+
+//12V电源控制IO--PC0
+#define POWER_12V_GPIO_RCC_CLK RCC_APB2Periph_GPIOC
+#define POWER_12V_GPIO   GPIOC
+#define POWER_12V_PIN    GPIO_Pin_0
+#define POWER_12V    PCout(0)
+
+#define POWER_12V_ON   IO_OFF(POWER_12V)
+#define POWER_12V_OFF  IO_ON(POWER_12V)
+
+//12V电源控制IO--PA12
+#define TEST_GPIO_RCC_CLK RCC_APB2Periph_GPIOA
+#define TEST_GPIO   GPIOA
+#define TEST_PIN    GPIO_Pin_12
+#define TEST    PAout(12)
+
+#define TEST_ON   IO_ON(TEST)
+#define TEST_OFF  IO_OFF(TEST)
 
 //配置选择IO--PA1
 #define CONFIG_GPIO     GPIOA
