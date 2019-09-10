@@ -26,12 +26,14 @@ struct bme280_data comp_data;
 
 //struct sys_config test_config;
 int check_ad_info(uint8_t *buf,float *ad);
+int door_pos_cal(void);
 int  loop_idx = 0;
 
 u8 flag=0;//????
 u16 t=0;//?????
 
 float light_v =0;
+int  old_sec = 0;
 int main(void)
 {
 	memset(&status, 0, sizeof(struct sys_status));
@@ -201,7 +203,7 @@ int main(void)
 		
 		//根据时间设置舱门状态
 		if(status.door_exp != 0) {
-			if(calendar.hour>MORNING_START_HOUR && calendar.hour<=AFTERNOON_START_HOUR) {
+			/*if((calendar.hour>=MORNING_START_HOUR) && calendar.hour<=AFTERNOON_START_HOUR) {
 				//舱门旋转135度
 				status.door_exp = 1;
 			} else if(calendar.hour>AFTERNOON_START_HOUR && calendar.hour<NIGHT_START_HOUR) {
@@ -209,10 +211,12 @@ int main(void)
 				status.door_exp = 2;
 			}	else {
 				status.door_exp = 0;
-			}
+			}*/
+			status.door_exp = door_pos_cal();
 		}
 		//printf("exp,cur : %d,%d\r\n",status.door_exp,status.door_cur);
-		if(calendar.sec%2) {
+		if(calendar.sec != old_sec) {
+			old_sec = calendar.sec;
 			printf("TIME : %04d-%02d-%02d,%02d:%02d:%02d\r\n",calendar.w_year,calendar.w_month,
 						calendar.w_date,calendar.hour,calendar.min,calendar.sec);
 		}
@@ -245,4 +249,20 @@ int check_ad_info(uint8_t *buf,float *ad)
 	temp[3] = buf[5];
 	
 	return 1;
+}
+
+int door_pos_cal(void)
+{
+	uint32_t cur_sec;
+	int pos;
+	cur_sec = calendar.hour*3600+calendar.min*60+calendar.sec;
+	if((cur_sec>=MORNING_START) && (cur_sec<AFTERNOON_START)) {
+		pos = 1;
+	} else if((cur_sec>=AFTERNOON_START)&&(cur_sec<NIGHT_START)){
+		pos = 2;
+	} else {
+		pos =0;
+	}
+	
+	return pos;
 }
