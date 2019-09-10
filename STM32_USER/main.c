@@ -13,7 +13,6 @@
 #include "key.h"
 #include "24cxx.h"
 #include "bme280.h"
-#include "bsp_ads1256.h"
 #include "TimerPWM.h"
 #include "main.h"
 

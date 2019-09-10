@@ -490,16 +490,6 @@
               <FilePath>..\HARDWARE\SPI\spi.h</FilePath>
             </File>
             <File>
-              <FileName>sdio_sdcard.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\SDIO\sdio_sdcard.c</FilePath>
-            </File>
-            <File>
-              <FileName>sdio_sdcard.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\HARDWARE\SDIO\sdio_sdcard.h</FilePath>
-            </File>
-            <File>
               <FileName>adc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\ADC\adc.c</FilePath>
@@ -523,11 +513,6 @@
               <FileName>bme_spi.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\BME280\bme_spi.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_ads1256.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\ADS1256\bsp_ads1256.c</FilePath>
             </File>
             <File>
               <FileName>key.c</FileName>
@@ -558,38 +543,6 @@
         </Group>
         <Group>
           <GroupName>MODULES\FATFS</GroupName>
-          <Files>
-            <File>
-              <FileName>diskio.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MODULES\FATFS\src\diskio.c</FilePath>
-            </File>
-            <File>
-              <FileName>diskio.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\MODULES\FATFS\src\diskio.h</FilePath>
-            </File>
-            <File>
-              <FileName>ff.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MODULES\FATFS\src\ff.c</FilePath>
-            </File>
-            <File>
-              <FileName>ff.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\MODULES\FATFS\src\ff.h</FilePath>
-            </File>
-            <File>
-              <FileName>ffconf.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\MODULES\FATFS\src\ffconf.h</FilePath>
-            </File>
-            <File>
-              <FileName>unicode.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MODULES\FATFS\src\option\unicode.c</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>SYSTEM</GroupName>
