@@ -17,12 +17,7 @@
 #include "TimerPWM.h"
 #include "main.h"
 
-uint8_t new_file_flag = 0;
-
-uint8_t send_cmd[12] = {0x24,0x30,0x31,0x2C,0x57,0x56,0x3F,0x2A,0x2F,0x2F,0x0D,0x0A};//$01,WV?*//
-
-#define ADC_CHAN_NUM 4
-double ADC_value[ADC_CHAN_NUM];
+uint8_t send_cmd[12] = {0x01,0x03,0x00,0x15,0x00,0x02,0xD5,0xCF};
 
 //
 struct sys_status status;
@@ -31,34 +26,17 @@ struct bme280_dev dev;
 struct bme280_data comp_data;
 
 //struct sys_config test_config;
-char *check_wind_info(char *str, int len);
-void record_file_write(void);
-void record_head(void);
-
-struct record_info{
-	double wind_speed;
-	double wind_direction;
-	uint32_t wind_count;
-	double temperature;
-	double humidity;
-	double pressure;
-	uint32_t sensor_count;
-	double ADC_value0;
-	double ADC_value1;
-	double ADC_value2;
-	double ADC_value3;
-	uint32_t ADC_count;
-};
-struct record_info record;
-struct record_info record_old;
+int check_ad_info(uint8_t *buf,float *ad);
 int  loop_idx = 0;
 
 u8 flag=0;//????
 u16 t=0;//?????
+
+float light_v =0;
 int main(void)
 {
 	memset(&status, 0, sizeof(struct sys_status));
-	memset(ADC_value,0,sizeof(double)*ADC_CHAN_NUM);
+
 	status.door_cur = 20;
 	status.door_exp = 1;
 	delay_init();	    //延时函数初始化
@@ -78,6 +56,9 @@ int main(void)
 	
 	USART1_Init(115200); //串口1初始化
 	USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
+	USART2_Init(9600); //??2???
+	USART_ITConfig(USART2, USART_IT_IDLE, ENABLE);
+	status.cmd_send_flag = 1;
 	LED_ON(LED1);
 	while(0){
 		TIM_SetCompare2(TIM3,499);
@@ -92,9 +73,8 @@ int main(void)
 	if(CONFIG_GPIO_GET_IN()) {
 		while(1) {
 			if(usart1_recv_frame_flag) {
-				sscanf((char*)usart1_recv, "$%d,%f,%f,%f,%f,%f,%f,%f,%f,%d,%d,%d,%d:%d:%d,%d,%d",&config.baud,
-					&config.cal[0].A,&config.cal[0].B,&config.cal[1].A,&config.cal[1].B,&config.cal[2].A,&config.cal[2].B,&config.cal[3].A,&config.cal[3].B,
-					&config.year,&config.month,&config.date,&config.hour,&config.minute,&config.second,&config.ad_gain,&config.freq);
+				sscanf((char*)usart1_recv, "$%d,%d,%d,%d,%d:%d:%d",&config.baud,
+					&config.year,&config.month,&config.date,&config.hour,&config.minute,&config.second);
 				usart1_recv_frame_flag = 0;
 				if(config.year == 0) {
 					status.rtc_flag =0;
@@ -116,52 +96,28 @@ int main(void)
 			config.head = 0xAA5555AA;
 			config.tail = 0xAA5555AA;
 			config.baud = 9600;
-			config.cal[0].A = 1.0;
-			config.cal[0].B = 0;
-			config.cal[1].A = 1.0;
-			config.cal[1].B = 0;
-			config.cal[2].A = 1.0;
-			config.cal[2].B = 0;
-			config.cal[3].A = 1.0;
-			config.cal[3].B = 0;
 			config.year = 2018;
 			config.month = 11;
 			config.date = 8;
 			config.hour = 0;
 			config.minute = 0;
 			config.second = 0;
-			config.freq = 1;
-			config.ad_gain = ADS1256_GAIN_1;
 			AT24CXX_Write(0,(u8*)&config,sizeof(config));
 		}
 		status.rtc_flag = 0;
-	}
-	printf("usart2 baud : %d\r\n",config.baud);
-	printf("ch 0 A : %f\r\n",config.cal[0].A);
-	printf("ch 0 B : %f\r\n",config.cal[0].B);
-	printf("ch 1 A : %f\r\n",config.cal[1].A);
-	printf("ch 1 B : %f\r\n",config.cal[1].B);
-	printf("ch 2 A : %f\r\n",config.cal[2].A);
-	printf("ch 2 B : %f\r\n",config.cal[2].B);
-	printf("ch 3 A : %f\r\n",config.cal[3].A);
-	printf("ch 3 B : %f\r\n",config.cal[3].B);
-	printf("ad_gain : %d\r\n",config.ad_gain);
-	printf("freq : %d\r\n",config.freq);
+	}*/
 	LED_ON(LED1);
-	
+	status.rtc_flag = 1;
+	config.year = 2018;
+	config.month = 11;
+	config.date = 8;
+	config.hour = 0;
+	config.minute = 0;
+	config.second = 0;
 	while(RTC_Init(status.rtc_flag,config.year,config.month,config.date,config.hour,config.minute,config.second)) {
 		delay_ms(100);
-	}*/
-	/*bme280_init(&dev);
-	
-	bsp_InitADS1256();
-	
-	ADS1256_CfgADC((ADS1256_GAIN_E)config.ad_gain, ADS1256_5SPS);
-	ADS1256_StartScan(1);*/
-	
-	while(RTC_Init(1,2019,6,23,19,0,0)) {
-		delay_ms(100);
 	}
+	bme280_init(&dev);
 	
 	limit1_int_start();
 	limit2_int_start();
@@ -169,7 +125,7 @@ int main(void)
 	while(1)
 	{
 		//定时读取温度判断加热器是否开启
-		/*if((tick_count - status.last_sensor) >400) {
+		if((tick_count - status.last_sensor) >400) {
 			status.last_sensor = tick_count;
 			if(BME280_OK == bme280_get_sensor_data(BME280_ALL, &comp_data, &dev)){
 				if ( LOW_TEMP_LIMIT > comp_data.temperature ) {
@@ -192,77 +148,102 @@ int main(void)
 			POWER_OFF;
 			status.power_em27 = 0;
 			status.door_exp = 0;	
-			USART_SendString(USART1,"STOP");
+			printf("power off\n");
 		} else {
 			status.power_220v = 1;
-		}*/
+		}
 		
 		//		
-		/*if(0==RAIN_SENSOR_GPIO_GET_IN()){//默认高电平，低电平关舱门
+		if(0==RAIN_SENSOR_GPIO_GET_IN()){//默认高电平，低电平关舱门
 			status.rain_status = 1;
 			POWER_OFF;
 			POWER_12V_OFF;
 			status.door_exp = 0;
 			status.power_em27 = 0;
-			USART_SendString(USART1,"STOP");
+			printf("it's rainning\n");
 		} else {
 			status.rain_status = 0;
-		}*/
-		//记录AD转换信息
-		/*if((tick_count - status.last_adc) > 400) {
-			status.last_adc = tick_count;
-			record.ADC_value0 += (double)ADS1256_GetAdc(0);
-			record.ADC_value1 += (double)ADS1256_GetAdc(1);
-			record.ADC_value2 += (double)ADS1256_GetAdc(2);
-			record.ADC_value3 += (double)ADS1256_GetAdc(3);
-			record.ADC_count++;
-			if(ADS1256_GetAdc(8)) {
-				USART_SendString(USART1," ADS1256 RESET\r\n");
-			}
-			if(record.ADC_value0 < LOW_LIGHT_LIMIT) {
-				POWER_OFF;
-				POWER_12V_OFF;
-				status.door_exp = 0;
-				status.power_em27 = 0;
-				USART_SendString(USART1,"STOP");
-			}
 		}
+		//记录AD转换信息
+		if(usart2_recv_frame_flag) {
+				float ad;
+				if(1==check_ad_info((uint8_t*)usart2_recv, &ad)) {
+					light_v = ad;
+					printf("%f\n",ad);
+					if(light_v < LOW_LIGHT_LIMIT) {
+						POWER_OFF;
+						POWER_12V_OFF;
+						status.door_exp = 0;
+						status.power_em27 = 0;
+						printf("close cur's light\n");
+					}
+				}
+				usart2_recv_frame_flag = 0;
+        usart2_recv_cnt = 0;
+        memset(usart2_recv,0,32);
+    } 
+		if (0 == usart2_recv_flag){
+			if(status.cmd_send_flag){
+				if((tick_count - status.last_cmd_tick) > 400){
+					USART_SendBuf(USART2,send_cmd,8);
+          status.last_cmd_tick = tick_count;
+        }
+			} 
+    }
+
 		if(status.power_em27 == 0){
-			if((status.power_220v)==1 && (status.rain_status==0) && (record.ADC_value0 >= LOW_LIGHT_LIMIT)) {
+			if((status.power_220v)==1 && (status.rain_status==0) && (light_v >= LOW_LIGHT_LIMIT)) {
 				POWER_ON;
 				POWER_12V_ON;
 				status.power_em27 = 1;
-				USART_SendString(USART1,"START");
 			}
-		}*/
-		//status.door_exp = ((loop_idx++)/3000)%3; 
-		status.door_exp = calendar.min%3;
-		/*if(status.door_exp != 0) {
-			if(calendar.hour>3 && calendar.hour<10) {
+		}
+		//status.door_exp = calendar.min%3;
+		
+		//根据时间设置舱门状态
+		if(status.door_exp != 0) {
+			if(calendar.hour>MORNING_START_HOUR && calendar.hour<=AFTERNOON_START_HOUR) {
 				//舱门旋转135度
 				status.door_exp = 1;
-			} else if(calendar.hour>10 && calendar.hour<16) {
+			} else if(calendar.hour>AFTERNOON_START_HOUR && calendar.hour<NIGHT_START_HOUR) {
 				//舱门旋转215度
 				status.door_exp = 2;
+			}	else {
+				status.door_exp = 0;
 			}
-		}*/
-		printf("exp,cur : %d,%d\r\n",status.door_exp,status.door_cur);
+		}
+		//printf("exp,cur : %d,%d\r\n",status.door_exp,status.door_cur);
+		if(calendar.sec%2) {
+			printf("TIME : %04d-%02d-%02d,%02d:%02d:%02d\r\n",calendar.w_year,calendar.w_month,
+						calendar.w_date,calendar.hour,calendar.min,calendar.sec);
+		}
 		if(status.door_exp != status.door_cur) {
 			//move_door();
-			TIM_SetCompare2(TIM3,499);
+			TIM_SetCompare2(TIM3,749);
 		}
 		delay_ms(10);
 	}
 }
 
-/*void get_ADC_value(void)
+
+//检查收到辐射表字符串的格式
+int check_ad_info(uint8_t *buf,float *ad)
 {
-	int32_t adc[ADC_CHAN_NUM];
-	int i;
-	
-	for(i=0; i<ADC_CHAN_NUM; i++)
-	{
-		adc[i] = ADS1256_GetAdc(i);
-		ADC_value[i] = ((double)adc[i] * 2500000.0) / 4194303.0;
+	//uint16_t crc16;
+	uint8_t *temp;
+	if((buf[0]!=0x01) || (buf[1]!=0x03) || (buf[2]!= 0x04)){
+		return 0;
 	}
-}*/
+	/*memcpy(&crc16,buf+6,2);
+	if(crc16!=crc16_cal(buf,7)){
+		return 0;
+	}*/
+	temp = (uint8_t *)ad;
+	
+	temp[0] = buf[4];
+	temp[1] = buf[3];
+	temp[2] = buf[6];
+	temp[3] = buf[5];
+	
+	return 1;
+}

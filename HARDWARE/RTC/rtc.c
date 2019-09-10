@@ -208,9 +208,6 @@ u8 RTC_Get(void)
 			temp1++;  
 		}
 		calendar.w_month=temp1+1;	//得到月份
-		if(calendar.w_date != (temp+1)) {
-			new_file_flag = 1;
-		}
 		calendar.w_date=temp+1;  	//得到日期 
 	}
 	temp=timecount%86400;     		//得到秒钟数   	   
