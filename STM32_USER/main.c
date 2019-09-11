@@ -149,7 +149,7 @@ int main(void)
 			POWER_OFF;
 			status.power_em27 = 0;
 			status.door_exp = 0;	
-			printf("power off\n");
+			//printf("power off\n");
 		} else {
 			status.power_220v = 1;
 		}
@@ -161,7 +161,7 @@ int main(void)
 			POWER_12V_OFF;
 			status.door_exp = 0;
 			status.power_em27 = 0;
-			printf("it's rainning\n");
+			//printf("it's rainning\n");
 		} else {
 			status.rain_status = 0;
 		}
@@ -176,8 +176,10 @@ int main(void)
 						POWER_12V_OFF;
 						status.door_exp = 0;
 						status.power_em27 = 0;
-						printf("close cur's light\n");
+						//printf("close cur's light\n");
 					}
+				}else{
+					printf("read solar irradiance failed !\n");
 				}
 				usart2_recv_frame_flag = 0;
         usart2_recv_cnt = 0;
@@ -193,10 +195,12 @@ int main(void)
     }
 
 		if(status.power_em27 == 0){
-			if((status.power_220v)==1 && (status.rain_status==0) && (light_v >= LOW_LIGHT_LIMIT)) {
+			if((status.power_220v==1) && (status.rain_status==0) && (light_v >= LOW_LIGHT_LIMIT)) {
 				POWER_ON;
 				POWER_12V_ON;
 				status.power_em27 = 1;
+			}else{
+				//printf("exp close!\n");
 			}
 		}
 		//status.door_exp = calendar.min%3;
@@ -219,6 +223,10 @@ int main(void)
 			old_sec = calendar.sec;
 			printf("TIME : %04d-%02d-%02d,%02d:%02d:%02d\r\n",calendar.w_year,calendar.w_month,
 						calendar.w_date,calendar.hour,calendar.min,calendar.sec);
+			printf("door exp pos:%d,door cur pos:%d\n",status.door_exp,status.door_cur);
+			printf("power 220V:%d\n",status.power_220v);
+			printf("rain status£º%d\n",status.rain_status);
+			printf("power em27£º%d\n",status.power_em27);
 		}
 		if(status.door_exp != status.door_cur) {
 			//move_door();
@@ -254,7 +262,7 @@ int check_ad_info(uint8_t *buf,float *ad)
 int door_pos_cal(void)
 {
 	uint32_t cur_sec;
-	int pos;
+	int pos=0;
 	cur_sec = calendar.hour*3600+calendar.min*60+calendar.sec;
 	if((cur_sec>=MORNING_START) && (cur_sec<AFTERNOON_START)) {
 		pos = 1;
