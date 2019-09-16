@@ -199,6 +199,7 @@ int main(void)
 				POWER_ON;
 				POWER_12V_ON;
 				status.power_em27 = 1;
+				status.door_exp = 19;
 			}else{
 				//printf("exp close!\n");
 			}
