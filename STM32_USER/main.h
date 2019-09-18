@@ -30,6 +30,9 @@ struct sys_status{
 		uint32_t last_adc;
 		uint32_t last_sensor;//ÎÂÊª¶È¼Æ
     uint32_t last_rain;
+		uint32_t morning_start;
+		uint32_t afternoon_start;
+		uint32_t night_start;
 		uint8_t cmd_send_flag;
     uint8_t lora_send_flag;
 		uint8_t stop_feed_flag;
@@ -43,18 +46,22 @@ struct sys_status{
 		uint8_t power_em27;
 		uint8_t power_220v;
 };
-
+struct time_set{
+	uint32_t hour;
+	uint32_t minute;
+	uint32_t second;
+};
 struct sys_config{
 	uint32_t head;
-	uint32_t baud;
 	uint32_t year;
 	uint32_t month;
 	uint32_t date;
 	uint32_t hour;
 	uint32_t minute;
 	uint32_t second;
-	uint32_t ad_gain;
-	uint32_t rsv[6];
+	struct time_set morning;
+	struct time_set afternoon;
+	struct time_set night;
 	uint32_t tail;
 };
 

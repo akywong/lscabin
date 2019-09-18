@@ -64,7 +64,7 @@ int main(void)
 	while(0){
 		TIM_SetCompare2(TIM3,499);
 	}
-	/*while(AT24CXX_Check())
+	while(AT24CXX_Check())
 	{
 		delay_ms(500);
 		//delay_ms(500);
@@ -74,8 +74,11 @@ int main(void)
 	if(CONFIG_GPIO_GET_IN()) {
 		while(1) {
 			if(usart1_recv_frame_flag) {
-				sscanf((char*)usart1_recv, "$%d,%d,%d,%d,%d:%d:%d",&config.baud,
-					&config.year,&config.month,&config.date,&config.hour,&config.minute,&config.second);
+				sscanf((char*)usart1_recv, "$%d,%d,%d,%d:%d:%d,%d:%d:%d,%d:%d:%d,%d:%d:%d",
+					&config.year,&config.month,&config.date,&config.hour,&config.minute,&config.second,
+					&config.morning.hour,&config.morning.minute,&config.morning.second,
+					&config.afternoon.hour,&config.afternoon.minute,&config.afternoon.second,
+					&config.night.hour,&config.night.minute,&config.night.second);
 				usart1_recv_frame_flag = 0;
 				if(config.year == 0) {
 					status.rtc_flag =0;
@@ -96,28 +99,41 @@ int main(void)
 		if((config.head != 0xAA5555AA) || (config.tail != 0xAA5555AA)){
 			config.head = 0xAA5555AA;
 			config.tail = 0xAA5555AA;
-			config.baud = 9600;
 			config.year = 2018;
 			config.month = 11;
 			config.date = 8;
 			config.hour = 0;
 			config.minute = 0;
 			config.second = 0;
+			config.morning.hour = MORNING_START_HOUR;
+			config.morning.minute = MORNING_START_MINUTE;
+			config.morning.second = MORNING_START_SECOND;
+			config.afternoon.hour = AFTERNOON_START_HOUR;
+			config.afternoon.minute = AFTERNOON_START_MINUTE;
+			config.afternoon.second = AFTERNOON_START_SECOND;
+			config.night.hour = NIGHT_START_HOUR;
+			config.night.minute = NIGHT_START_MINUTE;
+			config.night.second = NIGHT_START_SECOND;
 			AT24CXX_Write(0,(u8*)&config,sizeof(config));
 		}
 		status.rtc_flag = 0;
-	}*/
-	LED_ON(LED1);
+	}
+	/*LED_ON(LED1);
 	status.rtc_flag = 1;
 	config.year = 2018;
 	config.month = 11;
 	config.date = 8;
 	config.hour = 0;
 	config.minute = 0;
-	config.second = 0;
+	config.second = 0;*/
 	while(RTC_Init(status.rtc_flag,config.year,config.month,config.date,config.hour,config.minute,config.second)) {
 		delay_ms(100);
 	}
+	
+	status.afternoon_start = config.afternoon.hour*3600+config.afternoon.minute*60+config.afternoon.second;
+	status.morning_start = config.morning.hour*3600+config.morning.minute*60+config.morning.second;
+	status.night_start = config.night.hour*3600+config.night.minute*60+config.night.second;
+	
 	bme280_init(&dev);
 	
 	limit1_int_start();
@@ -265,9 +281,17 @@ int door_pos_cal(void)
 	uint32_t cur_sec;
 	int pos=0;
 	cur_sec = calendar.hour*3600+calendar.min*60+calendar.sec;
-	if((cur_sec>=MORNING_START) && (cur_sec<AFTERNOON_START)) {
+	/*if((cur_sec>=MORNING_START) && (cur_sec<AFTERNOON_START)) {
 		pos = 1;
 	} else if((cur_sec>=AFTERNOON_START)&&(cur_sec<NIGHT_START)){
+		pos = 2;
+	} else {
+		pos =0;
+	}*/
+	
+	if((cur_sec>=status.morning_start) && (cur_sec<status.afternoon_start)) {
+		pos = 1;
+	} else if((cur_sec>=status.afternoon_start)&&(cur_sec<status.night_start)){
 		pos = 2;
 	} else {
 		pos =0;
