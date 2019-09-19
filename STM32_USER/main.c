@@ -238,12 +238,14 @@ int main(void)
 		//printf("exp,cur : %d,%d\r\n",status.door_exp,status.door_cur);
 		if(calendar.sec != old_sec) {
 			old_sec = calendar.sec;
-			printf("TIME : %04d-%02d-%02d,%02d:%02d:%02d\r\n",calendar.w_year,calendar.w_month,
-						calendar.w_date,calendar.hour,calendar.min,calendar.sec);
-			printf("door exp pos:%d,door cur pos:%d\n",status.door_exp,status.door_cur);
+			if(status.door_cur != 0) {
+				printf("TIME : %04d-%02d-%02d,%02d:%02d:%02d, TEMPEATURE: %f¡æ, HUMIDITY: %%%f,PRESSURE: %fPa\r\n",calendar.w_year,calendar.w_month,
+						calendar.w_date,calendar.hour,calendar.min,calendar.sec,comp_data.temperature,comp_data.humidity,comp_data.pressure);
+			}
+			/*printf("door exp pos:%d,door cur pos:%d\n",status.door_exp,status.door_cur);
 			printf("power 220V:%d\n",status.power_220v);
 			printf("rain status£º%d\n",status.rain_status);
-			printf("power em27£º%d\n",status.power_em27);
+			printf("power em27£º%d\n",status.power_em27);*/
 		}
 		if(status.door_exp != status.door_cur) {
 			//move_door();
