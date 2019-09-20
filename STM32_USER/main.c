@@ -174,7 +174,6 @@ int main(void)
 		if(0==RAIN_SENSOR_GPIO_GET_IN()){//默认高电平，低电平关舱门
 			status.rain_status = 1;
 			POWER_OFF;
-			POWER_12V_OFF;
 			status.door_exp = 0;
 			status.power_em27 = 0;
 			//printf("it's rainning\n");
@@ -189,7 +188,6 @@ int main(void)
 					printf("%f\n",ad);
 					if(light_v < LOW_LIGHT_LIMIT) {
 						POWER_OFF;
-						POWER_12V_OFF;
 						status.door_exp = 0;
 						status.power_em27 = 0;
 						//printf("close cur's light\n");
@@ -213,26 +211,15 @@ int main(void)
 		if(status.power_em27 == 0){
 			if((status.power_220v==1) && (status.rain_status==0) && (light_v >= LOW_LIGHT_LIMIT)) {
 				POWER_ON;
-				POWER_12V_ON;
 				status.power_em27 = 1;
 				status.door_exp = 19;
 			}else{
 				//printf("exp close!\n");
 			}
 		}
-		//status.door_exp = calendar.min%3;
 		
 		//根据时间设置舱门状态
 		if(status.door_exp != 0) {
-			/*if((calendar.hour>=MORNING_START_HOUR) && calendar.hour<=AFTERNOON_START_HOUR) {
-				//舱门旋转135度
-				status.door_exp = 1;
-			} else if(calendar.hour>AFTERNOON_START_HOUR && calendar.hour<NIGHT_START_HOUR) {
-				//舱门旋转215度
-				status.door_exp = 2;
-			}	else {
-				status.door_exp = 0;
-			}*/
 			status.door_exp = door_pos_cal();
 		}
 		//printf("exp,cur : %d,%d\r\n",status.door_exp,status.door_cur);
@@ -242,14 +229,16 @@ int main(void)
 				printf("TIME : %04d-%02d-%02d,%02d:%02d:%02d, TEMPEATURE: %f℃, HUMIDITY: %%%f,PRESSURE: %fPa\r\n",calendar.w_year,calendar.w_month,
 						calendar.w_date,calendar.hour,calendar.min,calendar.sec,comp_data.temperature,comp_data.humidity,comp_data.pressure);
 			}
-			/*printf("door exp pos:%d,door cur pos:%d\n",status.door_exp,status.door_cur);
-			printf("power 220V:%d\n",status.power_220v);
-			printf("rain status：%d\n",status.rain_status);
-			printf("power em27：%d\n",status.power_em27);*/
 		}
 		if(status.door_exp != status.door_cur) {
-			//move_door();
+			POWER_12V_ON;
 			TIM_SetCompare2(TIM3,749);
+		}else{
+			TIM_SetCompare2(TIM3,999);
+			if((status.door_exp == 0) && (status.door_cur==0)) {
+				POWER_12V_OFF;
+				POWER_OFF;
+			}
 		}
 		delay_ms(10);
 	}
