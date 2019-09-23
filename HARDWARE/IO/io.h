@@ -38,8 +38,8 @@
 #define POWER_PIN    GPIO_Pin_1
 #define POWER    PEout(1)
 
-#define POWER_ON   IO_ON(POWER)
-#define POWER_OFF  IO_OFF(POWER)
+#define POWER_OFF   IO_ON(POWER)
+#define POWER_ON  IO_OFF(POWER)
 
 //12VµÁ‘¥øÿ÷∆IO--PC0
 #define POWER_12V_GPIO_RCC_CLK RCC_APB2Periph_GPIOC

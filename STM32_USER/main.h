@@ -45,6 +45,7 @@ struct sys_status{
 		uint8_t door_move;//舱门运动状态，0-静止，1-运动
 		uint8_t power_em27;
 		uint8_t power_220v;
+		uint8_t env_flag;
 };
 struct time_set{
 	uint32_t hour;

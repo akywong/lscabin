@@ -47,6 +47,7 @@ int main(void)
 	IO_Init();
 	
 	POWER_12V_OFF;
+	POWER_OFF;
 	//TEST_ON;
 	//rain_int_start();
 	Beep_Init();
@@ -61,6 +62,7 @@ int main(void)
 	USART_ITConfig(USART2, USART_IT_IDLE, ENABLE);
 	status.cmd_send_flag = 1;
 	LED_ON(LED1);
+	
 	while(0){
 		TIM_SetCompare2(TIM3,499);
 	}
@@ -126,6 +128,9 @@ int main(void)
 	config.hour = 0;
 	config.minute = 0;
 	config.second = 0;*/
+	printf("morning start:%02d:%02d:%02d\n",config.morning.hour,config.morning.minute,config.morning.second);
+	printf("afternoon start:%02d:%02d:%02d\n",config.afternoon.hour,config.afternoon.minute,config.afternoon.second);
+	printf("night start:%02d:%02d:%02d\n",config.night.hour,config.night.minute,config.night.second);
 	while(RTC_Init(status.rtc_flag,config.year,config.month,config.date,config.hour,config.minute,config.second)) {
 		delay_ms(100);
 	}
@@ -162,8 +167,6 @@ int main(void)
 		//
 		if(POWER_CHECK_GET_IN() == 0 ) {
 			status.power_220v = 0;
-			POWER_OFF;
-			status.power_em27 = 0;
 			status.door_exp = 0;	
 			//printf("power off\n");
 		} else {
@@ -173,9 +176,7 @@ int main(void)
 		//		
 		if(0==RAIN_SENSOR_GPIO_GET_IN()){//默认高电平，低电平关舱门
 			status.rain_status = 1;
-			POWER_OFF;
 			status.door_exp = 0;
-			status.power_em27 = 0;
 			//printf("it's rainning\n");
 		} else {
 			status.rain_status = 0;
@@ -187,9 +188,7 @@ int main(void)
 					light_v = ad;
 					printf("%f\n",ad);
 					if(light_v < LOW_LIGHT_LIMIT) {
-						POWER_OFF;
 						status.door_exp = 0;
-						status.power_em27 = 0;
 						//printf("close cur's light\n");
 					}
 				}else{
@@ -208,27 +207,44 @@ int main(void)
 			} 
     }
 
-		if(status.power_em27 == 0){
+		if(status.env_flag == 0 ){
 			if((status.power_220v==1) && (status.rain_status==0) && (light_v >= LOW_LIGHT_LIMIT)) {
-				POWER_ON;
-				status.power_em27 = 1;
-				status.door_exp = 19;
-			}else{
-				//printf("exp close!\n");
+				status.env_flag = 1;
+				status.door_exp = door_pos_cal();
+				if(status.door_exp == 0){
+					POWER_OFF;
+					status.power_em27 = 0;
+				}
+			}
+		}else{
+			if(status.door_exp == 0) {
+				status.env_flag = 0;
+				POWER_OFF;
+				status.power_em27 = 0;
 			}
 		}
 		
-		//根据时间设置舱门状态
-		if(status.door_exp != 0) {
-			status.door_exp = door_pos_cal();
-		}
-		//printf("exp,cur : %d,%d\r\n",status.door_exp,status.door_cur);
 		if(calendar.sec != old_sec) {
+			//根据时间设置舱门状态
+			if(status.env_flag == 1) {
+				status.door_exp = door_pos_cal();
+				if(status.door_exp ==0) {
+					POWER_OFF;
+					status.power_em27 = 0;
+				}
+			}
 			old_sec = calendar.sec;
 			if(status.door_cur != 0) {
 				printf("TIME : %04d-%02d-%02d,%02d:%02d:%02d, TEMPEATURE: %f℃, HUMIDITY: %%%f,PRESSURE: %fPa\r\n",calendar.w_year,calendar.w_month,
 						calendar.w_date,calendar.hour,calendar.min,calendar.sec,comp_data.temperature,comp_data.humidity,comp_data.pressure);
+			}else{
+				printf("TIME : %04d-%02d-%02d,%02d:%02d:%02d\r\n",calendar.w_year,calendar.w_month,
+						calendar.w_date,calendar.hour,calendar.min,calendar.sec);
 			}
+			printf("door exp pos:%d,door cur pos:%d\n",status.door_exp,status.door_cur);
+			printf("power 220V:%d\n",status.power_220v);
+			printf("rain status：%d\n",status.rain_status);
+			printf("power em27：%d\n",status.power_em27);
 		}
 		if(status.door_exp != status.door_cur) {
 			POWER_12V_ON;
@@ -238,6 +254,9 @@ int main(void)
 			if((status.door_exp == 0) && (status.door_cur==0)) {
 				POWER_12V_OFF;
 				POWER_OFF;
+			}else if((status.door_exp == status.door_cur) && (status.door_cur !=0)){
+				POWER_ON;
+				status.power_em27 = 1;
 			}
 		}
 		delay_ms(10);
