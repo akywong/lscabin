@@ -75,7 +75,10 @@
 #define LIMIT2_GPIO_GET_IN()  ((LIMIT_GPIO->IDR & LIMIT_PIN2)?(1):(0))
 #define LIMIT3_GPIO_GET_IN()  ((LIMIT_GPIO->IDR & LIMIT_PIN3)?(1):(0))
 
-#define LIMIT_GPIO_RCC_CLK RCC_APB2Periph_GPIOC
+#define LIMIT4_GPIO_RCC_CLK 	RCC_APB2Periph_GPIOG
+#define LIMIT4_GPIO  GPIOG
+#define LIMIT_PIN4  GPIO_Pin_9
+#define LIMIT4_GPIO_GET_IN()  ((LIMIT4_GPIO->IDR & LIMIT_PIN4)?(1):(0))
 /************************* 函数声明 *********************************/
 void IO_Init(void);//初始化
 
@@ -90,6 +93,9 @@ void limit2_int_stop(void);
 	
 void limit3_int_start(void);
 void limit3_int_stop(void);
+
+void limit4_int_start(void);
+void limit4_int_stop(void);
 
 /****************************** end *********************************/
 

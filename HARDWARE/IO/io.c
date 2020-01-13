@@ -51,6 +51,12 @@ void IO_Init(void)
 	
 	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN3;
 	GPIO_Init(LIMIT_GPIO, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN3;
+	GPIO_Init(LIMIT_GPIO, &GPIO_InitStructure);
+	
+	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN4;
+	GPIO_Init(LIMIT4_GPIO, &GPIO_InitStructure);
 }
  
 void rain_int_start(void)
@@ -258,6 +264,52 @@ void limit3_int_stop(void)
 	NVIC_Init(&NVIC_InitStructure);
 }
 
+void limit4_int_start(void)
+{
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
+
+	/* Enable AFIO clock */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+
+	/* Connect EXTI4 Line to PC4 pin */
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOG, GPIO_PinSource9);
+
+	/* Configure EXTI4 line */
+	EXTI_InitStructure.EXTI_Line = EXTI_Line9;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  /* 上升沿 */
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+
+	/* Enable and set EXTI4 Interrupt  priority */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x03;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x03;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+void limit4_int_stop(void)
+{
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
+
+	/* 配置 EXTI LineXXX */
+	EXTI_InitStructure.EXTI_Line = EXTI_Line9;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;	/* 上升沿 */
+	EXTI_InitStructure.EXTI_LineCmd = DISABLE;		/* 禁止 */
+	EXTI_Init(&EXTI_InitStructure);
+
+	/* 中断优先级配置 最低优先级 这里一定要分开的设置中断，不能够合并到一个里面设置 */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x03;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x03;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;		/* 禁止 */
+	NVIC_Init(&NVIC_InitStructure);
+}
+
 
 void EXTI9_5_IRQHandler(void)
 {
@@ -284,5 +336,17 @@ void EXTI9_5_IRQHandler(void)
 
 		/* 执行上面的代码完毕后，再次清零中断标志 */
 		EXTI_ClearITPendingBit(EXTI_Line6);		/* 清除中断标志位 */
+	}
+	
+	if (EXTI_GetITStatus(EXTI_Line9) != RESET)
+	{
+		EXTI_ClearITPendingBit(EXTI_Line9);		/* 清除中断标志位 */
+
+		TIM_SetCompare2(TIM3,999);
+		status.door_move = 0;
+		status.door_cur = 3;
+
+		/* 执行上面的代码完毕后，再次清零中断标志 */
+		EXTI_ClearITPendingBit(EXTI_Line9);		/* 清除中断标志位 */
 	}
 }
