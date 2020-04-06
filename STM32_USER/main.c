@@ -162,6 +162,7 @@ int main(void)
 	limit2_int_start();
 	limit3_int_start();
 	limit4_int_start();
+	limit5_int_start();
 	while(1)
 	{
 		//定时读取温度判断加热器是否开启
@@ -272,8 +273,10 @@ int main(void)
 			status.door_cur=2;
 		}else if(LIMIT4_GPIO_GET_IN()){
 			status.door_cur=3;
-		}else{
+		}else if(LIMIT5_GPIO_GET_IN()){
 			status.door_cur=4;
+		}else{
+			status.door_cur=5;
 		}
 		if(status.door_exp != status.door_cur) {
 			if(status.door_exp != status.door_open_flag) {
