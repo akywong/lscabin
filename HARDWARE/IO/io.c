@@ -67,18 +67,18 @@ void rain_int_start(void)
 	/* Enable AFIO clock */
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 
-	/* Connect EXTI4 Line to PE3 pin */
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource1);
+	/* Connect EXTI0 Line to PC0 pin */
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOC, GPIO_PinSource0);
 
-	/* Configure EXTI4 line */
-	EXTI_InitStructure.EXTI_Line = EXTI_Line1;
+	/* Configure EXTI0 line */
+	EXTI_InitStructure.EXTI_Line = EXTI_Line0;
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
 	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;  /* 下降沿 */
 	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_InitStructure);
 
-	/* Enable and set EXTI4 Interrupt  priority */
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI1_IRQn;
+	/* Enable and set EXTI0 Interrupt  priority */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x03;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x03;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -91,24 +91,30 @@ void rain_int_stop(void)
 	NVIC_InitTypeDef   NVIC_InitStructure;
 
 	/* 配置 EXTI LineXXX */
-	EXTI_InitStructure.EXTI_Line = EXTI_Line1;
+	EXTI_InitStructure.EXTI_Line = EXTI_Line0;
 	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
 	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;	/* 下降沿 */
 	EXTI_InitStructure.EXTI_LineCmd = DISABLE;		/* 禁止 */
 	EXTI_Init(&EXTI_InitStructure);
 
 	/* 中断优先级配置 最低优先级 这里一定要分开的设置中断，不能够合并到一个里面设置 */
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI1_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x03;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x03;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = DISABLE;		/* 禁止 */
 	NVIC_Init(&NVIC_InitStructure);
 }
 
-void EXTI1_IRQHandler(void)
+void EXTI0_IRQHandler(void)
 {
-	POWER_OFF;
-	POWER_12V_OFF;
+	if (EXTI_GetITStatus(EXTI_Line0) != RESET)
+	{
+		EXTI_ClearITPendingBit(EXTI_Line0);		/* 清除中断标志位 */
+		POWER_OFF;
+		POWER_12V_OFF;
+		/* 执行上面的代码完毕后，再次清零中断标志 */
+		EXTI_ClearITPendingBit(EXTI_Line0);		/* 清除中断标志位 */
+	}
 }
 
 
