@@ -27,6 +27,7 @@ struct bme280_data comp_data;
 //struct sys_config test_config;
 int check_ad_info(uint8_t *buf,float *ad);
 int door_pos_cal(void);
+void RS485_send_data(void *buf,uint8_t len);
 int  loop_idx = 0;
 
 u8 flag=0;//????
@@ -162,7 +163,7 @@ int main(void)
 	limit2_int_start();
 	limit3_int_start();
 	limit4_int_start();
-	limit5_int_start();
+	//limit5_int_start();
 	while(1)
 	{
 		//定时读取温度判断加热器是否开启
@@ -220,7 +221,7 @@ int main(void)
 		if (0 == usart2_recv_flag){
 			if(status.cmd_send_flag){
 				if((tick_count - status.last_cmd_tick) > 400){
-					USART_SendBuf(USART2,send_cmd,8);
+					RS485_send_data(send_cmd,8);
           status.last_cmd_tick = tick_count;
         }
 			} 
@@ -339,4 +340,19 @@ int door_pos_cal(void)
 	}
 	
 	return pos;
+}
+
+void RS485_send_data(void *buf,uint8_t len)
+{
+	int i;
+	uint8_t *p=(uint8_t *)buf;
+	IO_ON(RE485);
+	IO_ON(DE485);
+	for(i=0;i<len;i++){
+		while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
+		USART_SendData(USART2,p[i]);
+	}
+	while(USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET);
+	IO_OFF(RE485);
+	IO_OFF(DE485);
 }

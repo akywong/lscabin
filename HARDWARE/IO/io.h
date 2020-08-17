@@ -65,6 +65,14 @@
 #define CONFIG_GPIO_RCC_CLK RCC_APB2Periph_GPIOA
 #define CONFIG_GPIO_GET_IN()  ((CONFIG_GPIO->IDR & CONFIG_PIN)?(1):(0))
 
+#define RE485_GPIO GPIOD
+#define DE485_GPIO GPIOD
+#define RE485_PIN GPIO_Pin_6
+#define DE485_PIN GPIO_Pin_7
+#define RE485 PDout(6)
+#define DE485 PDout(7)
+#define IO485_GPIO_RCC_CLK RCC_APB2Periph_GPIOD
+
 //限位开光中断IO--PC4,PC5,PC6
 #define LIMIT_GPIO_RCC_CLK 	RCC_APB2Periph_GPIOC
 #define LIMIT_GPIO  GPIOC

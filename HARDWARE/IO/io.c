@@ -7,7 +7,7 @@ void IO_Init(void)
  GPIO_InitTypeDef  GPIO_InitStructure;
  uint32_t peri;
 	
- peri = HEATER_GPIO_RCC_CLK|RAIN_SENSOR_GPIO_RCC_CLK|POWER_GPIO_RCC_CLK |CONFIG_GPIO_RCC_CLK |LIMIT_GPIO_RCC_CLK;
+ peri = HEATER_GPIO_RCC_CLK|RAIN_SENSOR_GPIO_RCC_CLK|POWER_GPIO_RCC_CLK |CONFIG_GPIO_RCC_CLK |LIMIT_GPIO_RCC_CLK|IO485_GPIO_RCC_CLK;
 	
  RCC_APB2PeriphClockCmd(peri, ENABLE);	 //使能时钟
  //加热继电器IO初始化（输出）
@@ -16,6 +16,14 @@ void IO_Init(void)
  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;		 //IO口速度为50MHz
  GPIO_Init(HEATER_GPIO, &GPIO_InitStructure);					   //根据设定参数初始化加热器
  GPIO_ResetBits(HEATER_GPIO,HEATER_PIN);						         //控制管脚输出低
+	
+	GPIO_InitStructure.GPIO_Pin = RE485_PIN;
+	GPIO_Init(RE485_GPIO, &GPIO_InitStructure);
+	GPIO_SetBits(RE485_GPIO,RE485_PIN);
+	
+	GPIO_InitStructure.GPIO_Pin = DE485_PIN;
+	GPIO_Init(DE485_GPIO, &GPIO_InitStructure);
+	GPIO_SetBits(DE485_GPIO,DE485_PIN);
 	
 	//EM27电源控制管脚（输出）
 	GPIO_InitStructure.GPIO_Pin = POWER_PIN;
