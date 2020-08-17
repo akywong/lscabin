@@ -19,10 +19,10 @@
 #define HEATER_ON   IO_ON(HEATER)
 #define HEATER_OFF  IO_OFF(HEATER)
 
-//220V电源监测IO--PE1
+//220V电源监测IO--PE3
 #define POWER_CHECK_GPIO_RCC_CLK  RCC_APB2Periph_GPIOE
 #define POWER_CHECK_GPIO  GPIOE
-#define POWER_CHECK_PIN   GPIO_Pin_1
+#define POWER_CHECK_PIN   GPIO_Pin_3
 #define POWER_CHECK_GET_IN()  ((POWER_CHECK_GPIO->IDR & POWER_CHECK_PIN)?(1):(0))  
 
 
@@ -32,11 +32,11 @@
 #define RAIN_SENSOR_PIN	GPIO_Pin_0
 #define RAIN_SENSOR_GPIO_GET_IN()  ((RAIN_SENSOR_GPIO->IDR & RAIN_SENSOR_PIN)?(1):(0))
 
-//EM27电源控制IO--PE0
+//EM27电源控制IO--PE2
 #define POWER_GPIO_RCC_CLK RCC_APB2Periph_GPIOE
 #define POWER_GPIO   GPIOE
-#define POWER_PIN    GPIO_Pin_0
-#define POWER    PEout(0)
+#define POWER_PIN    GPIO_Pin_2
+#define POWER    PEout(2)
 
 #define POWER_OFF   IO_ON(POWER)
 #define POWER_ON  IO_OFF(POWER)
