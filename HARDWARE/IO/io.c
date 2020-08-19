@@ -60,10 +60,10 @@ void IO_Init(void)
 	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN3;
 	GPIO_Init(LIMIT_GPIO, &GPIO_InitStructure);
 	
-	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN3;
+	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN4;
 	GPIO_Init(LIMIT_GPIO, &GPIO_InitStructure);
 	
-	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN4;
+	GPIO_InitStructure.GPIO_Pin = LIMIT_PIN5;
 	GPIO_Init(LIMIT_GPIO, &GPIO_InitStructure);
 }
  
