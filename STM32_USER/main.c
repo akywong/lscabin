@@ -78,9 +78,10 @@ int main(void)
 	if(CONFIG_GPIO_GET_IN()) {
 		while(1) {
 			if(usart1_recv_frame_flag) {
-				sscanf((char*)usart1_recv, "$%d,%d,%d,%d:%d:%d,%d:%d:%d,%d:%d:%d,%d:%d:%d,%d:%d:%d",
+				sscanf((char*)usart1_recv, "$%d,%d,%d,%d:%d:%d,%d:%d:%d,%d:%d:%d,%d:%d:%d,%d:%d:%d,%d:%d:%d",
 					&config.year,&config.month,&config.date,&config.hour,&config.minute,&config.second,
 					&config.morning.hour,&config.morning.minute,&config.morning.second,
+					&config.noon.hour,&config.noon.minute,&config.noon.second,
 					&config.afternoon.hour,&config.afternoon.minute,&config.afternoon.second,
 					&config.evening.hour,&config.evening.minute,&config.evening.second,
 					&config.night.hour,&config.night.minute,&config.night.second);
@@ -113,6 +114,9 @@ int main(void)
 			config.morning.hour = MORNING_START_HOUR;
 			config.morning.minute = MORNING_START_MINUTE;
 			config.morning.second = MORNING_START_SECOND;
+			config.noon.hour = MORNING_START_HOUR;
+			config.noon.minute = MORNING_START_MINUTE;
+			config.noon.second = MORNING_START_SECOND;
 			config.afternoon.hour = AFTERNOON_START_HOUR;
 			config.afternoon.minute = AFTERNOON_START_MINUTE;
 			config.afternoon.second = AFTERNOON_START_SECOND;
@@ -135,6 +139,7 @@ int main(void)
 	config.minute = 0;
 	config.second = 0;*/
 	printf("morning start:%02d:%02d:%02d\n",config.morning.hour,config.morning.minute,config.morning.second);
+	printf("noon start:%02d:%02d:%02d\n",config.noon.hour,config.noon.minute,config.noon.second);
 	printf("afternoon start:%02d:%02d:%02d\n",config.afternoon.hour,config.afternoon.minute,config.afternoon.second);
 	printf("evening start:%02d:%02d:%02d\n",config.evening.hour,config.evening.minute,config.evening.second);
 	printf("night start:%02d:%02d:%02d\n",config.night.hour,config.night.minute,config.night.second);
@@ -144,6 +149,7 @@ int main(void)
 	
 	status.afternoon_start = config.afternoon.hour*3600+config.afternoon.minute*60+config.afternoon.second;
 	status.morning_start = config.morning.hour*3600+config.morning.minute*60+config.morning.second;
+	status.noon_start = config.noon.hour*3600+config.noon.minute*60+config.noon.second;
 	status.evening_start = config.evening.hour*3600+config.evening.minute*60+config.evening.second;
 	status.night_start = config.night.hour*3600+config.night.minute*60+config.night.second;
 	
@@ -157,13 +163,17 @@ int main(void)
 		status.door_open_flag=2;
 	}else if(LIMIT4_GPIO_GET_IN()){
 		status.door_open_flag=3;
-	}
+	}else if(LIMIT5_GPIO_GET_IN()){
+		status.door_open_flag=4;
+	}/*else{
+		status.door_open_flag=5;
+	}*/
 	
 	limit1_int_start();
 	limit2_int_start();
 	limit3_int_start();
 	limit4_int_start();
-	//limit5_int_start();
+	limit5_int_start();
 	while(1)
 	{
 		//定时读取温度判断加热器是否开启
@@ -329,12 +339,14 @@ int door_pos_cal(void)
 	int pos=0;
 	cur_sec = calendar.hour*3600+calendar.min*60+calendar.sec;
 
-	if((cur_sec>=status.morning_start) && (cur_sec<status.afternoon_start)) {
+	if((cur_sec>=status.morning_start) && (cur_sec<status.noon_start)) {
 		pos = 1;
-	} else if((cur_sec>=status.afternoon_start)&&(cur_sec<status.evening_start)){
+	}else if((cur_sec>=status.noon_start)&&(cur_sec<status.afternoon_start)){
 		pos = 2;
+	} else if((cur_sec>=status.afternoon_start)&&(cur_sec<status.evening_start)){
+		pos = 3;
 	} else if((cur_sec>=status.evening_start)&&(cur_sec<status.night_start)){
-		pos = 3; 
+		pos = 4; 
 	} else {
 		pos =0;
 	}

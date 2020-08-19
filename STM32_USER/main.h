@@ -12,8 +12,13 @@
 #define MORNING_START_MINUTE 30
 #define MORNING_START_SECOND 0
 #define MORNING_START (3600*MORNING_START_HOUR+60*MORNING_START_MINUTE+MORNING_START_SECOND)
+
+#define NOON_START_HOUR 11
+#define NOON_START_MINUTE 30
+#define NOON_START_SECOND 0
+#define NOON_START (3600*NOON_START_HOUR+60*NOON_START_MINUTE+NOON_START_SECOND)
 //
-#define AFTERNOON_START_HOUR  12
+#define AFTERNOON_START_HOUR  13
 #define AFTERNOON_START_MINUTE 30
 #define AFTERNOON_START_SECOND 0
 #define AFTERNOON_START (3600*AFTERNOON_START_HOUR+60*AFTERNOON_START_MINUTE+AFTERNOON_START_SECOND)
@@ -37,6 +42,7 @@ struct sys_status{
 		uint32_t last_sensor;//ÎÂÊª¶È¼Æ
     uint32_t last_rain;
 		uint32_t morning_start;
+		uint32_t noon_start;
 		uint32_t afternoon_start;
 		uint32_t evening_start;
 		uint32_t night_start;
@@ -69,6 +75,7 @@ struct sys_config{
 	uint32_t minute;
 	uint32_t second;
 	struct time_set morning;
+	struct time_set noon;
 	struct time_set afternoon;
 	struct time_set evening;
 	struct time_set night;
