@@ -178,7 +178,7 @@ void EXTI4_IRQHandler(void)
 	{
 		EXTI_ClearITPendingBit(EXTI_Line4);		/* 清除中断标志位 */
 
-		TIM_SetCompare2(TIM3,999);
+		TIM_SetCompare1(TIM3,999);
 		status.door_move = 0;
 		status.door_cur = 1;
 
@@ -332,7 +332,7 @@ void EXTI9_5_IRQHandler(void)
 	{
 		EXTI_ClearITPendingBit(EXTI_Line5);		/* 清除中断标志位 */
 
-		TIM_SetCompare2(TIM3,999);
+		TIM_SetCompare1(TIM3,999);
 		status.door_move = 0;
 		status.door_cur = 0;
 
@@ -344,7 +344,7 @@ void EXTI9_5_IRQHandler(void)
 	{
 		EXTI_ClearITPendingBit(EXTI_Line7);		/* 清除中断标志位 */
 
-		TIM_SetCompare2(TIM3,999);
+		TIM_SetCompare1(TIM3,999);
 		status.door_move = 0;
 		status.door_cur = 2;
 
@@ -356,7 +356,7 @@ void EXTI9_5_IRQHandler(void)
 	{
 		EXTI_ClearITPendingBit(EXTI_Line9);		/* 清除中断标志位 */
 
-		TIM_SetCompare2(TIM3,999);
+		TIM_SetCompare1(TIM3,999);
 		status.door_move = 0;
 		status.door_cur = 3;
 
@@ -418,7 +418,7 @@ void EXTI15_10_IRQHandler(void)
 	{
 		EXTI_ClearITPendingBit(EXTI_Line11);		/* 清除中断标志位 */
 
-		TIM_SetCompare2(TIM3,999);
+		TIM_SetCompare1(TIM3,999);
 		status.door_move = 0;
 		status.door_cur = 4;
 

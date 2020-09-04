@@ -56,7 +56,7 @@ int main(void)
 	AT24CXX_Init();
 	
 	TIM3_PWM_Init(1000-1,72-1);//72分频，计数到1000，周期为1ms，对应频率1KHz
-	TIM_SetCompare2(TIM3,999);
+	TIM_SetCompare1(TIM3,999);
 	
 	USART1_Init(115200); //串口1初始化
 	USART_ITConfig(USART1, USART_IT_IDLE, ENABLE);
@@ -66,7 +66,7 @@ int main(void)
 	LED_ON(LED1);
 	
 	while(0){
-		TIM_SetCompare2(TIM3,499);
+		TIM_SetCompare1(TIM3,499);
 	}
 	while(AT24CXX_Check())
 	{
@@ -292,10 +292,10 @@ int main(void)
 		if(status.door_exp != status.door_cur) {
 			if(status.door_exp != status.door_open_flag) {
 				POWER_12V_ON;
-				TIM_SetCompare2(TIM3,749);
+				TIM_SetCompare1(TIM3,749);
 			}
 		}else{
-			TIM_SetCompare2(TIM3,999);
+			TIM_SetCompare1(TIM3,999);
 			if(status.door_cur==0) {
 				POWER_OFF;
 				status.power_em27 = 0;
